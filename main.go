@@ -201,3 +201,4 @@ func lockedUsers(conn *ldap.Conn, base_dn string) {
 // deal with optional args
 // accept password via read or stdin
 // deal with json
+// add custom queries
