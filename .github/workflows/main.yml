@@ -2,8 +2,11 @@ name: goreleaser
 
 on:
   pull_request:
+    tags:
+      - '*'
   push:
-
+    tags:
+      - '*'
 permissions:
   contents: write
 
@@ -11,18 +14,18 @@ jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      -
-        name: Set up Go
-        uses: actions/setup-go@v3
-      -
-        name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v4
+      - run: git fetch --force --tags
+      - uses: actions/setup-go@v4
         with:
+          go-version: stable
+      # More assembly might be required: Docker logins, GPG, etc. It all depends
+      # on your needs.
+      - uses: goreleaser/goreleaser-action@v4
+        with:
+          # either 'goreleaser' (default) or 'goreleaser-pro':
           distribution: goreleaser
           version: latest
           args: release --clean
