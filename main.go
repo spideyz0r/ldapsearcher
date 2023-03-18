@@ -20,7 +20,7 @@ func main() {
 	)
 
 	help := getopt.BoolLong("help", 'h', "display this help")
-	ldap_server := getopt.StringLong("server", 's', "localhost", "ldap server")
+	ldap_server := getopt.StringLong("server", 's', "localhost", "ldap server. default: localhost")
 	ldap_port := getopt.StringLong("port", 'r', "389", "ldap port")
 	ldap_user := getopt.StringLong("user", 'u', "", "username")
 	ldap_passwd := getopt.BoolLong("passwd", 'p', "", "password")
@@ -117,3 +117,4 @@ func main() {
 
 // TODO
 // re-implement the recursive search
+// rpm package pipeline
