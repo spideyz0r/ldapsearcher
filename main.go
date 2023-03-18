@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-ldap/ldap/v3"
 	"github.com/pborman/getopt"
+	"golang.org/x/term"
 )
 
 func main() {
@@ -18,15 +19,16 @@ func main() {
 
 	help := getopt.BoolLong("help", 'h', "display this help")
 	ldap_server := getopt.StringLong("server", 's', "localhost", "ldap server")
-	ldap_port := getopt.StringLong("port", 'p', "389", "ldap port")
+	ldap_port := getopt.StringLong("port", 'r', "389", "ldap port")
 	ldap_user := getopt.StringLong("user", 'u', "", "username")
+	ldap_passwd := getopt.BoolLong("passwd", 'p', "", "password")
 	base_dn := getopt.StringLong("base-dn", 'd', "", "BaseDN")
 	group_memberof := getopt.StringLong("group-membersof", 'm', "", "list groups that the specified group is a member, wildcards allowed")
 	user_group_search := getopt.StringLong("list-groups-user", 'g', "", "list groups of a user")
 	group_member_list := getopt.StringLong("list-all-members-group", 'l', "", "list all members of a group -- usually requires full distinguished name of group")
 	extra_ou := getopt.StringLong("extra-ou", 'o', "", "extra organizational unit")
 	modified_after := getopt.StringLong("modified-after", 'c', "", "list users created or modified after date YYYYMMDDHHMMSS")
-	recursive_groups_user := getopt.StringLong("recursive-list-group", 'r', "", "list nested groups for a user")
+	// recursive_groups_user := getopt.StringLong("recursive-list-group", 'r', "", "list nested groups for a user")
 	users_locked := getopt.BoolLong("locked", 'k', "list locked users")
 	custom_search := getopt.BoolLong("custom-search", 't', "", "custom search")
 	custom_filter := getopt.StringLong("custom-filter", 'f', "", "filter for custom search")
@@ -39,7 +41,19 @@ func main() {
 		os.Exit(0)
 	}
 
-	conn, err := ldapConnect(*ldap_server+":"+*ldap_port, *ldap_user)
+	var pass string
+	if *ldap_passwd{
+		fmt.Print("Enter your password: ")
+		pass_b, err := term.ReadPassword(int(os.Stdin.Fd()))
+		if err != nil {
+			panic(err)
+		}
+		pass = string(pass_b)
+	} else {
+		pass = os.Getenv("ADP")
+	}
+
+	conn, err := ldapConnect(*ldap_server+":"+*ldap_port, *ldap_user, pass)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -71,26 +85,26 @@ func main() {
 
 	// len(*modified_after) > 0
 
-	if len(*recursive_groups_user) > 0 {
-		s := Search{
-			base_dn:    *base_dn,
-			filter:     fmt.Sprintf("(mail=%s)", *recursive_groups_user),
-			attributes: []string{"sAMAccountName", "memberOf"},
-		}
-		sr, err := s.newSearch(conn)
-		if err != nil {
-			log.Fatal(err)
-		}
-		printOut(sr, s.attributes, true)
-		listNestedGroupsUser(conn, s, sr)
+	// if len(*recursive_groups_user) > 0 {
+	// 	s := Search{
+	// 		base_dn:    *base_dn,
+	// 		filter:     fmt.Sprintf("(mail=%s)", *recursive_groups_user),
+	// 		attributes: []string{"sAMAccountName", "memberOf"},
+	// 	}
+	// 	sr, err := s.newSearch(conn)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	printOut(sr, s.attributes, true)
+	// 	listNestedGroupsUser(conn, s, sr)
 
-		// if len(*recursive_groups_user) > 0 {
-		// 	err = listNestedGroupsUser(conn, *recursive_groups_user, *base_dn, *extra_ou)
-		// 	if err != nil {
-		// 		log.Fatal(err)
-		// 	}
-		// 	os.Exit(0)
-	}
+	// 	// if len(*recursive_groups_user) > 0 {
+	// 	// 	err = listNestedGroupsUser(conn, *recursive_groups_user, *base_dn, *extra_ou)
+	// 	// 	if err != nil {
+	// 	// 		log.Fatal(err)
+	// 	// 	}
+	// 	// 	os.Exit(0)
+	// }
 
 	if len(*user_group_search) > 0 {
 		s := Search{
@@ -191,48 +205,48 @@ func listGroupsUser(conn *ldap.Conn, user string, base_dn string) error {
 	return nil
 }
 
-type M map[string]interface{}
+// type M map[string]interface{}
 
-func listNestedGroupsUser(conn *ldap.Conn, s Search, sr *ldap.SearchResult) error {
-	var myM []M
-	for _, e := range sr.Entries {
-		for _, i := range e.GetAttributeValues("memberOf") {
-			group := strings.Split(strings.Split(i, "=")[1], ",")[0]
-			fmt.Printf("%s\n", group)
-			myM = append(myM, recursiveSearch(conn, s.base_dn, group))
-			// if err != nil {
-			//     return fmt.Errorf("query failed %s", err)
-			// }
-		}
-	}
-	fmt.Printf("%v", myM)
-	return nil
-}
+// func listNestedGroupsUser(conn *ldap.Conn, s Search, sr *ldap.SearchResult) error {
+// 	var myM []M
+// 	for _, e := range sr.Entries {
+// 		for _, i := range e.GetAttributeValues("memberOf") {
+// 			group := strings.Split(strings.Split(i, "=")[1], ",")[0]
+// 			fmt.Printf("%s\n", group)
+// 			myM = append(myM, recursiveSearch(conn, s.base_dn, group))
+// 			// if err != nil {
+// 			//     return fmt.Errorf("query failed %s", err)
+// 			// }
+// 		}
+// 	}
+// 	fmt.Printf("%v", myM)
+// 	return nil
+// }
 
-func recursiveSearch(conn *ldap.Conn, b string, g string) M {
-	var myM M
-	s := Search{
-		base_dn:    b,
-		filter:     fmt.Sprintf("(cn=%s)", g),
-		attributes: []string{"memberOf"},
-	}
-	sr, err := s.newSearch(conn)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, e := range sr.Entries {
-		for _, i := range e.GetAttributeValues("memberOf") {
-			group := strings.Split(strings.Split(i, "=")[1], ",")[0]
-			// fmt.Printf(">>>>>>>>>Inner group %s\n",group)
-			myM[group] = recursiveSearch(conn, group, s.base_dn)
-			// if err != nil {
-			//     return nil, fmt.Errorf("query failed %s", err)
-			// }
-		}
-	}
-	// fmt.Printf("%v", all_groups)
-	return myM
-}
+// func recursiveSearch(conn *ldap.Conn, b string, g string) M {
+// 	var myM M
+// 	s := Search{
+// 		base_dn:    b,
+// 		filter:     fmt.Sprintf("(cn=%s)", g),
+// 		attributes: []string{"memberOf"},
+// 	}
+// 	sr, err := s.newSearch(conn)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	for _, e := range sr.Entries {
+// 		for _, i := range e.GetAttributeValues("memberOf") {
+// 			group := strings.Split(strings.Split(i, "=")[1], ",")[0]
+// 			// fmt.Printf(">>>>>>>>>Inner group %s\n",group)
+// 			myM[group] = recursiveSearch(conn, group, s.base_dn)
+// 			// if err != nil {
+// 			//     return nil, fmt.Errorf("query failed %s", err)
+// 			// }
+// 		}
+// 	}
+// 	// fmt.Printf("%v", all_groups)
+// 	return myM
+// }
 
 // func recursiveSearch(conn *ldap.Conn, b string, g string, m map[string][]string) ([]string error) {
 // 	s := Search {
@@ -266,3 +280,4 @@ func recursiveSearch(conn *ldap.Conn, b string, g string) M {
 // accept password via read or stdin
 // deal with json
 // add custom queries
+//    a

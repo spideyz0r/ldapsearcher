@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/go-ldap/ldap/v3"
 )
@@ -29,12 +28,12 @@ func (s Search) newSearch(conn *ldap.Conn) (*ldap.SearchResult, error) {
 	return sr, nil
 }
 
-func ldapConnect(server string, user string) (*ldap.Conn, error) {
+func ldapConnect(server string, user string, pass string) (*ldap.Conn, error) {
 	conn, err := ldap.Dial("tcp", server)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to server: %s\n", err)
 	}
-	if err := conn.Bind(user, os.Getenv("ADP")); err != nil {
+	if err := conn.Bind(user, pass); err != nil {
 		return nil, fmt.Errorf("Failed to bind: %s\n", err)
 	}
 
