@@ -1,5 +1,5 @@
-# ldapsearcher
-A ldapsearch tool. Run pre-defined or custom queries
+# ldapsearcher [![CI](https://github.com/spideyz0r/ldapsearcher/workflows/gotester/badge.svg)][![CI](https://github.com/spideyz0r/ldapsearcher/workflows/goreleaser/badge.svg)]
+A ldap search tool. Run pre-defined or custom queries
 ```
 $ ./ldapsearcher -h
 Usage: ldapsearcher [-hkpt] [-a value] [-c value] [-d value] [-f value] [-g value] [-l value] [-m value] [-o value] [-r value] [-s value] [-u value] [parameters ...]
