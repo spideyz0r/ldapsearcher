@@ -12,8 +12,11 @@ import (
 
 func main() {
 	const (
-		emailFilter    = "(mail=%s)"
-		memberOfFilter = "(memberOf=cn=%s,%s,%s)"
+		userGroupSearchFilter  = "(mail=%s)"
+		groupMemberListFilter  = "(memberOf=cn=%s, %s, %s)"
+		modifiedAfterFilter    = "(&(whenChanged>=%s.0-0500)(objectClass=user)(objectCategory=person))"
+		usersLockedFilter      = "(lockoutTime>=1)"
+		groupMemberOfFilter    = "(cn=%s)"
 	)
 
 	help := getopt.BoolLong("help", 'h', "display this help")
@@ -72,31 +75,31 @@ func main() {
 	case len(*user_group_search) > 0:
 		s = Search{
 			base_dn:    *base_dn,
-			filter:     fmt.Sprintf("(mail=%s)", *user_group_search),
+			filter:     fmt.Sprintf(userGroupSearchFilter, *user_group_search),
 			attributes: []string{"sAMAccountName", "memberOf"},
 		}
 	case len(*group_member_list) > 0:
 		s = Search{
 			base_dn:    *base_dn,
-			filter:     fmt.Sprintf("(memberOf=cn=%s, %s, %s)", *group_member_list, *extra_ou, *base_dn),
+			filter:     fmt.Sprintf(groupMemberListFilter, *group_member_list, *extra_ou, *base_dn),
 			attributes: []string{"sAMAccountName"},
 		}
 	case len(*modified_after) > 0:
 		s = Search{
 			base_dn:    *base_dn,
-			filter:     fmt.Sprintf("(&(whenChanged>=%s.0-0500)(objectClass=user)(objectCategory=person))", *modified_after),
+			filter:     fmt.Sprintf(modifiedAfterFilter, *modified_after),
 			attributes: []string{"sAMAccountName"},
 		}
 	case *users_locked:
 		s = Search{
 			base_dn:    *base_dn,
-			filter:     "(lockoutTime>=1)",
+			filter:     usersLockedFilter,
 			attributes: []string{"sAMAccountName"},
 		}
 	case len(*group_memberof) > 0:
 		s = Search{
 			base_dn:    *base_dn,
-			filter:     fmt.Sprintf("(cn=%s)", *group_memberof),
+			filter:     fmt.Sprintf(groupMemberOfFilter, *group_memberof),
 			attributes: []string{"cn", "sAMAccountName", "memberOf"},
 		}
 	default:
