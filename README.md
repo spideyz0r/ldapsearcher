@@ -1,5 +1,22 @@
-# ldapsearcher [![CI](https://github.com/spideyz0r/ldapsearcher/workflows/gotester/badge.svg)][![CI](https://github.com/spideyz0r/ldapsearcher/workflows/goreleaser/badge.svg)]
+
+# ldapsearcher [![CI](https://github.com/spideyz0r/ldapsearcher/workflows/gotester/badge.svg)][![CI](https://github.com/spideyz0r/ldapsearcher/workflows/goreleaser/badge.svg)][![CI](https://github.com/spideyz0r/ldapsearcher/workflows/rpm-builder/badge.svg)]
 A ldap search tool. Run pre-defined or custom queries
+
+## Install
+
+### RPM
+```
+dnf copr enable brandfbb/ldapsearcher
+dnf install ldapsearcher
+```
+
+
+### From source
+```
+go build -v -o  ldapsearcher
+```
+
+## Usage
 ```
 $ ldapsearcher -h
 Usage: search [-chjLp] [-a value] [-b value] [-f value] [-g value] [-G value] [-l value] [-m value] [-o value] [-P value] [-s value] [-u value] [parameters ...]
