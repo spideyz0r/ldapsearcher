@@ -1,0 +1,25 @@
+name: rpm-builder
+
+on:
+  push:
+    # run only against tags
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Create copr credential file
+      run: 	rpm/copr-cred.sh
+      env:
+        COPR_LOGIN: ${{ secrets.COPR_LOGIN }}
+        COPR_USERNAME: ${{ secrets.COPR_USERNAME }}
+        COPR_TOKEN: ${{ secrets.COPR_TOKEN }}
+    - name: Start rpm-builder container
+      run: 	docker run -it -d --name rpm-build -v /home/runner/work/ldapsearcher:/project --cap-add=SYS_ADMIN --security-opt apparmor:unconfined spideyz0r/mockzor
+    - name: Build package
+      run: 	docker exec rpm-build /project/ldapsearcher/rpm/build.sh
+
