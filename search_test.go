@@ -2,12 +2,12 @@ package main
 
 import (
 	"testing"
-
+	"reflect"
 	"github.com/go-ldap/ldap/v3"
 )
 
 
-func TestResultToJson(t *testing.T) {
+func TestformatResult(t *testing.T) {
 	// create a sample SearchResult object
 	sr := &ldap.SearchResult{
 		Entries: []*ldap.Entry{
@@ -22,24 +22,26 @@ func TestResultToJson(t *testing.T) {
 	}
 
 	// create a Search object
-	s := Search{
-		attributes: []string{"cn", "mail"},
-	}
+	attributes := []string{"cn", "email"}
 
-	// call the function with the sample SearchResult object
-	jsonStr, err := s.resultToJson(sr)
+	// Call the function being tested
+	result, err := formatResult(sr, attributes)
+
+	// Check the result
 	if err != nil {
-		t.Errorf("Error converting SearchResult to JSON: %v", err)
+		t.Errorf("Unexpected error: %v", err)
 	}
 
-	// check the output JSON string
-	expectedJSON := `{"cn":["some user"],"mail":["someuser@sometest.com"]}`
-	if jsonStr != expectedJSON {
-		t.Errorf("Expected JSON: %s, got: %s", expectedJSON, jsonStr)
+	expectedResult := map[string][]string{
+		"cn":    {"some user"},
+		"email": {"someuser@sometest.com"},
 	}
+
+	if reflect.DeepEqual(result, expectedResult) {
+		t.Errorf("Expected result: %s got: %v", expectedResult, result)
+	}
+
 }
-
-
 
 
 

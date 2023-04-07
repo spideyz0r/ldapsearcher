@@ -117,14 +117,13 @@ func main() {
 		fmt.Println("")
 	}
 
-	r, err := formatResult(result, s.attributes)
+	r, _ := formatResult(result, s.attributes)
 	if err != nil {
-		log.Fatal("Failed to convert search result to slice: %s\n", err)
+		log.Fatal(err)
 	}
 
 	printResult(r, *json_output)
 	os.Exit(0)
-
 }
 
 
