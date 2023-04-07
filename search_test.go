@@ -6,8 +6,7 @@ import (
 	"github.com/go-ldap/ldap/v3"
 )
 
-
-func TestformatResult(t *testing.T) {
+func TestFormatResult(t *testing.T) {
 	// create a sample SearchResult object
 	sr := &ldap.SearchResult{
 		Entries: []*ldap.Entry{
