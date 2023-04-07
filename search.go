@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -11,10 +12,9 @@ type Search struct {
 	base_dn     string
 	filter      string
 	attributes  []string
-	result_json string
 }
 
-func (s Search) newSearch(conn *ldap.Conn) (string, error) {
+func (s Search) newSearch(conn *ldap.Conn) (*ldap.SearchResult, error) {
 	searchRequest := ldap.NewSearchRequest(
 		s.base_dn,
 		2, 0, 0, 0, false,
@@ -24,22 +24,18 @@ func (s Search) newSearch(conn *ldap.Conn) (string, error) {
 	)
 	sr, err := conn.Search(searchRequest)
 	if err != nil {
-		return "", fmt.Errorf("Failed to run search: %s\n", err)
+		return nil, fmt.Errorf("Failed to run search: %s\n", err)
 	}
-	result_json, err := s.resultToJson(sr)
-	if err != nil {
-		return "", fmt.Errorf("Failed to convert search result to JSON: %s\n", err)
-	}
-	return result_json, nil
+	return sr, nil
 }
 
-func (s Search) resultToJson(sr *ldap.SearchResult) (string, error) {
+func formatResult(sr *ldap.SearchResult, attributes []string) (map[string][]string, error) {
 	result := make(map[string][]string)
 	if len(sr.Entries) <= 0 {
-		return "{}", nil
+		return result, nil
 	}
 	for _, e := range sr.Entries {
-		for _, a := range s.attributes {
+		for _, a := range attributes {
 			var results []string
 			for _, r := range e.GetAttributeValues(a) {
 				results = append(results, r)
@@ -51,11 +47,23 @@ func (s Search) resultToJson(sr *ldap.SearchResult) (string, error) {
 			}
 		}
 	}
+	return result, nil
+}
+
+func printResult(result map[string][]string, json_output bool) (error) {
 	j, err := json.Marshal(result)
 	if err != nil {
-		return "{}", err
+		return err
 	}
-	return string(j), nil
+
+	if json_output {
+		fmt.Printf("%s", string(j))
+		return nil
+	}
+	var prettyJSON bytes.Buffer
+	json.Indent(&prettyJSON, j, "", "\t")
+	fmt.Println(prettyJSON.String())
+	return nil
 }
 
 func ldapConnect(server string, user string, pass string) (*ldap.Conn, error) {
