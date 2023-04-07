@@ -35,6 +35,7 @@ func main() {
 	custom_search := getopt.BoolLong("custom-search", 'c', "", "custom search")
 	custom_filter := getopt.StringLong("custom-filter", 'f', "", "filter for custom search")
 	custom_attributes := getopt.StringLong("custom-attributes", 'a', "", "list of attributes delimited by ',' for custom search")
+	json_output := getopt.BoolLong("single-line-output", 'j', "single-line json output")
 
 	getopt.Parse()
 
@@ -106,12 +107,24 @@ func main() {
 		log.Fatal("No search criteria provided")
 	}
 
-	result_json, err := s.newSearch(conn)
+	result, err := s.newSearch(conn)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(result_json)
+
+	// Jump a line after the password prompt
+	if len(*ldap_user) > 0 {
+		fmt.Println("")
+	}
+
+	r, err := formatResult(result, s.attributes)
+	if err != nil {
+		log.Fatal("Failed to convert search result to slice: %s\n", err)
+	}
+
+	printResult(r, *json_output)
 	os.Exit(0)
+
 }
 
 
